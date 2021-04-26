@@ -13,6 +13,8 @@ NORI_NAMESPACE_BEGIN
 
 namespace ProjEnv
 {
+    template<size_t SHOrder>
+    std::vector<Eigen::Array3f> PrecomputeCubemapSH(const std::vector<std::unique_ptr<float[]>>& images, const int& width, const int& height, const int& channel);
     std::vector<std::unique_ptr<float[]>>
     LoadCubemapImages(const std::string &cubemapDir, int &width, int &height,
                       int &channel)
@@ -116,6 +118,20 @@ namespace ProjEnv
         std::vector<Eigen::Array3f> SHCoeffiecents(SHNum);
         for (int i = 0; i < SHNum; i++)
             SHCoeffiecents[i] = Eigen::Array3f(0);
+
+        std::vector<int> allLs(SHNum);
+        std::vector<int> allMs(SHNum);
+        int index = 0;
+        for (int l = 0; l <= SHOrder; l++)
+        {
+            for (int m = -l; m <= l; m++)
+            {
+                allLs[index] = l;
+                allMs[index] = m;
+                index++;
+            }
+        }                
+
         float sumWeight = 0;
         for (int i = 0; i < 6; i++)
         {
@@ -129,6 +145,17 @@ namespace ProjEnv
                     int index = (y * width + x) * channel;
                     Eigen::Array3f Le(images[i][index + 0], images[i][index + 1],
                                       images[i][index + 2]);
+                    float u = float(x) / width;
+                    float v = float(y) / height;
+                    float dOmega = CalcArea(u, v, width, height);
+                    auto dirD = dir.cast<double>();
+
+                    for (int s = 0; s < SHNum; s++)
+                    {
+                        auto sh = sh::EvalSH(allLs[s], allMs[s], dirD.normalized());
+                        SHCoeffiecents[s] += sh * dOmega * Le;
+                    }
+                    //sumWeight += dOmega;
                 }
             }
         }
@@ -199,23 +226,51 @@ public:
         // Projection transport
         m_TransportSHCoeffs.resize(SHCoeffLength, mesh->getVertexCount());
         fout << mesh->getVertexCount() << std::endl;
+
+        std::vector<int> allLs(SHCoeffLength);
+        std::vector<int> allMs(SHCoeffLength);
+        int index = 0;
+        for (int l = 0; l <= SHOrder; l++)
+        {
+            for (int m = -l; m <= l; m++)
+            {
+                allLs[index] = l;
+                allMs[index] = m;
+                index++;
+            }
+        }
+
         for (int i = 0; i < mesh->getVertexCount(); i++)
         {
             const Point3f &v = mesh->getVertexPositions().col(i);
-            const Normal3f &n = mesh->getVertexNormals().col(i);
+            const Normal3f &n = mesh->getVertexNormals().col(i).normalized();
             auto shFunc = [&](double phi, double theta) -> double {
                 Eigen::Array3d d = sh::ToVector(phi, theta);
-                const auto wi = Vector3f(d.x(), d.y(), d.z());
+                const auto wi = Vector3f(d.x(), d.y(), d.z()).normalized();
+                double in = n.dot(wi);
                 if (m_Type == Type::Unshadowed)
                 {
                     // TODO: here you need to calculate unshadowed transport term of a given direction
                     // TODO: 此处你需要计算给定方向下的unshadowed传输项球谐函数值
+                    if (in > 0)
+                    {
+                        return in;
+                    }
                     return 0;
                 }
                 else
                 {
                     // TODO: here you need to calculate shadowed transport term of a given direction
                     // TODO: 此处你需要计算给定方向下的shadowed传输项球谐函数值
+                    auto triangleCount = mesh->getTriangleCount();
+                    if (in > 0)
+                    {
+                        if(scene->rayIntersect(Ray3f(v, wi)))
+                        {
+                            return 0;
+                        }
+                        return in;
+                    }
                     return 0;
                 }
             };
@@ -275,10 +330,10 @@ public:
         // TODO: you need to delete the following four line codes after finishing your calculation to SH,
         //       we use it to visualize the normals of model for debug.
         // TODO: 在完成了球谐系数计算后，你需要删除下列四行，这四行代码的作用是用来可视化模型法线
-        if (c.isZero()) {
-            auto n_ = its.shFrame.n.cwiseAbs();
-            return Color3f(n_.x(), n_.y(), n_.z());
-        }
+        //if (c.isZero()) {
+        //    auto n_ = its.shFrame.n.cwiseAbs();
+        //    return Color3f(n_.x(), n_.y(), n_.z());
+        //}
         return c;
     }
 
