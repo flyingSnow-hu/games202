@@ -65,13 +65,13 @@ void main_() {
 
 void main(){
     vec3 ret = 
-        SH00()         * vec3(uPrecomputeLR[0][0], uPrecomputeLG[0][0], uPrecomputeLB[0][0])  * SH00()         * vPrecomputeLT[0][0]+ 
-        SH1n1(vNormal) * vec3(uPrecomputeLR[0][1], uPrecomputeLG[0][1], uPrecomputeLB[0][1])  * SH1n1(vNormal) * vPrecomputeLT[0][1]+ 
-        SH10(vNormal)  * vec3(uPrecomputeLR[0][2], uPrecomputeLG[0][2], uPrecomputeLB[0][2])  * SH10(vNormal)  * vPrecomputeLT[0][2]+ 
+        SH00()         * vec3(uPrecomputeLR[0][0], uPrecomputeLG[0][0], uPrecomputeLB[0][0])  * SH00()         * vPrecomputeLT[0][0] + 
+        SH1n1(vNormal) * vec3(uPrecomputeLR[0][1], uPrecomputeLG[0][1], uPrecomputeLB[0][1])  * SH1n1(vNormal) * vPrecomputeLT[0][1] + 
+        SH10(vNormal)  * vec3(uPrecomputeLR[0][2], uPrecomputeLG[0][2], uPrecomputeLB[0][2])  * SH10(vNormal)  * vPrecomputeLT[0][2] + 
         SH1p1(vNormal) * vec3(uPrecomputeLR[1][0], uPrecomputeLG[1][0], uPrecomputeLB[1][0])  * SH1p1(vNormal) * vPrecomputeLT[1][0] +
 
         SH2n2(vNormal) * vec3(uPrecomputeLR[1][1], uPrecomputeLG[1][1], uPrecomputeLB[1][1])  * SH2n2(vNormal) * vPrecomputeLT[1][1] +
-        SH2n1(vNormal) * vec3(uPrecomputeLR[1][2], uPrecomputeLG[1][2], uPrecomputeLB[1][2])  * SH2n1(vNormal) * vPrecomputeLT[1][2] +
+        SH2n1(vNormal) * vec3(uPrecomputeLR[1][2], uPrecomputeLG[1][2], uPrecomputeLB[1][2])  * SH2n1(vNormal) * vPrecomputeLT[1][2] + 
         SH20(vNormal)  * vec3(uPrecomputeLR[2][0], uPrecomputeLG[2][0], uPrecomputeLB[2][0])  * SH20(vNormal) * vPrecomputeLT[2][0] +
         SH2n1(vNormal) * vec3(uPrecomputeLR[2][1], uPrecomputeLG[2][1], uPrecomputeLB[2][1])  * SH2p1(vNormal) * vPrecomputeLT[2][1] +
         SH2p2(vNormal) * vec3(uPrecomputeLR[2][2], uPrecomputeLG[2][2], uPrecomputeLB[2][2])  * SH2p2(vNormal) * vPrecomputeLT[2][2]
