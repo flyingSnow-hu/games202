@@ -18,8 +18,6 @@ class PhongMaterial extends Material {
 }
 
 async function buildPhongMaterial(color, specular, light, translate, scale, vertexPath, fragmentPath) {
-
-
     let vertexShader = await getShaderString(vertexPath);
     let fragmentShader = await getShaderString(fragmentPath);
 
