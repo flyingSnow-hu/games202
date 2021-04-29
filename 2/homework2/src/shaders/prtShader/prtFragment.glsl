@@ -47,35 +47,20 @@ float SH2p2(vec3 dir) {
   return 0.546274 * (dir.x * dir.x - dir.y * dir.y);
 }
 
-void main_() {
-    vec3 ret = 
-        SH00()         * vPrecomputeLT[0][0] * SH00()         *  vec3(uPrecomputeLR[0][0], uPrecomputeLG[0][0], uPrecomputeLB[0][0]) + 
-        SH1n1(vNormal) * vPrecomputeLT[0][1] * SH1n1(vNormal) *  vec3(uPrecomputeLR[0][1], uPrecomputeLG[0][1], uPrecomputeLB[0][1]) + 
-        SH10(vNormal)  * vPrecomputeLT[0][2] * SH10(vNormal)  *  vec3(uPrecomputeLR[0][2], uPrecomputeLG[0][2], uPrecomputeLB[0][2]) + 
-        SH1p1(vNormal) * vPrecomputeLT[1][0] * SH1p1(vNormal) *  vec3(uPrecomputeLR[1][0], uPrecomputeLG[1][0], uPrecomputeLB[1][0]) +
-        SH2n2(vNormal) * vPrecomputeLT[1][1] * SH2n2(vNormal) *  vec3(uPrecomputeLR[1][1], uPrecomputeLG[1][1], uPrecomputeLB[1][1]) +
-        SH2n1(vNormal) * vPrecomputeLT[1][2] * SH2n1(vNormal) *  vec3(uPrecomputeLR[1][2], uPrecomputeLG[1][2], uPrecomputeLB[1][2]) +
-        SH20(vNormal)  * vPrecomputeLT[2][0] * SH20(vNormal)  *  vec3(uPrecomputeLR[2][0], uPrecomputeLG[2][0], uPrecomputeLB[2][0]) +
-        SH2p1(vNormal) * vPrecomputeLT[2][1] * SH2p1(vNormal) *  vec3(uPrecomputeLR[2][1], uPrecomputeLG[2][1], uPrecomputeLB[2][1]) +
-        SH2p2(vNormal) * vPrecomputeLT[2][2] * SH2p2(vNormal) *  vec3(uPrecomputeLR[2][2], uPrecomputeLG[2][2], uPrecomputeLB[2][2]) 
-        ;
-
-    gl_FragColor = vec4(ret, 1.0);
-}
-
 void main(){
-    vec3 ret = 
-        SH00()         * vec3(uPrecomputeLR[0][0], uPrecomputeLG[0][0], uPrecomputeLB[0][0])  * SH00()         * vPrecomputeLT[0][0] + 
-        SH1n1(vNormal) * vec3(uPrecomputeLR[0][1], uPrecomputeLG[0][1], uPrecomputeLB[0][1])  * SH1n1(vNormal) * vPrecomputeLT[0][1] + 
-        SH10(vNormal)  * vec3(uPrecomputeLR[0][2], uPrecomputeLG[0][2], uPrecomputeLB[0][2])  * SH10(vNormal)  * vPrecomputeLT[0][2] + 
-        SH1p1(vNormal) * vec3(uPrecomputeLR[1][0], uPrecomputeLG[1][0], uPrecomputeLB[1][0])  * SH1p1(vNormal) * vPrecomputeLT[1][0] +
+    vec3 normalDir = normalize(vNormal);
+    vec4 color_lt = 
+        SH00()           * vec4(uPrecomputeLR[0][0], uPrecomputeLG[0][0], uPrecomputeLB[0][0], vPrecomputeLT[0][0]) + 
+        SH1n1(normalDir) * vec4(uPrecomputeLR[0][1], uPrecomputeLG[0][1], uPrecomputeLB[0][1], vPrecomputeLT[0][1]) + 
+        SH10(normalDir)  * vec4(uPrecomputeLR[0][2], uPrecomputeLG[0][2], uPrecomputeLB[0][2], vPrecomputeLT[0][2]) + 
+        SH1p1(normalDir) * vec4(uPrecomputeLR[1][0], uPrecomputeLG[1][0], uPrecomputeLB[1][0], vPrecomputeLT[1][0]) +
 
-        SH2n2(vNormal) * vec3(uPrecomputeLR[1][1], uPrecomputeLG[1][1], uPrecomputeLB[1][1])  * SH2n2(vNormal) * vPrecomputeLT[1][1] +
-        SH2n1(vNormal) * vec3(uPrecomputeLR[1][2], uPrecomputeLG[1][2], uPrecomputeLB[1][2])  * SH2n1(vNormal) * vPrecomputeLT[1][2] + 
-        SH20(vNormal)  * vec3(uPrecomputeLR[2][0], uPrecomputeLG[2][0], uPrecomputeLB[2][0])  * SH20(vNormal) * vPrecomputeLT[2][0] +
-        SH2n1(vNormal) * vec3(uPrecomputeLR[2][1], uPrecomputeLG[2][1], uPrecomputeLB[2][1])  * SH2p1(vNormal) * vPrecomputeLT[2][1] +
-        SH2p2(vNormal) * vec3(uPrecomputeLR[2][2], uPrecomputeLG[2][2], uPrecomputeLB[2][2])  * SH2p2(vNormal) * vPrecomputeLT[2][2]
+        SH2n2(normalDir) * vec4(uPrecomputeLR[1][1], uPrecomputeLG[1][1], uPrecomputeLB[1][1], vPrecomputeLT[1][1]) +
+        SH2n1(normalDir) * vec4(uPrecomputeLR[1][2], uPrecomputeLG[1][2], uPrecomputeLB[1][2], vPrecomputeLT[1][2]) + 
+        SH20(normalDir)  * vec4(uPrecomputeLR[2][0], uPrecomputeLG[2][0], uPrecomputeLB[2][0], vPrecomputeLT[2][0]) +
+        SH2p1(normalDir) * vec4(uPrecomputeLR[2][1], uPrecomputeLG[2][1], uPrecomputeLB[2][1], vPrecomputeLT[2][1]) +
+        SH2p2(normalDir) * vec4(uPrecomputeLR[2][2], uPrecomputeLG[2][2], uPrecomputeLB[2][2], vPrecomputeLT[2][2])
         ;
 
-    gl_FragColor = vec4(ret / 3.14, 1);
+    gl_FragColor = vec4(color_lt.rgb * color_lt.w,1);
 }

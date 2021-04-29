@@ -155,7 +155,6 @@ namespace ProjEnv
                         auto sh = sh::EvalSH(allLs[s], allMs[s], dirD.normalized());
                         SHCoeffiecents[s] += sh * dOmega * Le;
                     }
-                    //sumWeight += dOmega;
                 }
             }
         }

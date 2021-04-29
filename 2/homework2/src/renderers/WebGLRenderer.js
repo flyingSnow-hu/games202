@@ -47,7 +47,8 @@ class WebGLRenderer {
                 this.gl.useProgram(this.meshes[i].shader.program.glShaderProgram);
                 this.gl.uniform3fv(this.meshes[i].shader.program.uniforms.uLightPos, this.lights[l].entity.lightPos);
 
- 
+                let colorMat3 = getMat3ValueFromRGB(precomputeL[guiParams.envmapId]);
+                    
                 for (let k in this.meshes[i].material.uniforms) {
 
                     let cameraModelMatrix = mat4.create();
@@ -62,7 +63,6 @@ class WebGLRenderer {
 
                     // Bonus - Fast Spherical Harmonic Rotation
                     //let precomputeL_RGBMat3 = getRotationPrecomputeL(precomputeL[guiParams.envmapId], cameraModelMatrix);               
-                    let colorMat3 = getMat3ValueFromRGB(precomputeL[guiParams.envmapId]);
                     if (k == 'uPrecomputeLR') {
                         gl.uniformMatrix3fv(this.meshes[i].shader.program.uniforms.uPrecomputeLR, false, colorMat3[0]);     
                     }
