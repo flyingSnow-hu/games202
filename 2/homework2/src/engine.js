@@ -7,6 +7,7 @@ var envmap = [
 	'assets/cubemap/GraceCathedral',
 	'assets/cubemap/Indoor',
 	'assets/cubemap/Skybox',
+	'assets/cubemap/Skybox2',
 ];
 
 var guiParams = {
@@ -122,7 +123,7 @@ async function GAMES202Main() {
 	function createGUI() {
 		const gui = new dat.gui.GUI();
 		const panelModel = gui.addFolder('Switch Environment Map');
-		panelModel.add(guiParams, 'envmapId', { 'CornellBox': 0, 'GraceGathedral': 1, 'Indoor': 2, 'Skybox': 3 }).name('Envmap Name');
+		panelModel.add(guiParams, 'envmapId', { 'CornellBox': 0, 'GraceGathedral': 1, 'Indoor': 2, 'Skybox': 3 , 'Skybox2': 4 }).name('Envmap Name');
 		panelModel.open();
 	}
 

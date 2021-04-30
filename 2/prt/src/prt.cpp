@@ -145,10 +145,10 @@ namespace ProjEnv
                     int index = (y * width + x) * channel;
                     Eigen::Array3f Le(images[i][index + 0], images[i][index + 1],
                                       images[i][index + 2]);
-                    float u = float(x) / width;
-                    float v = float(y) / height;
-                    float dOmega = CalcArea(u, v, width, height);
+
+                    float dOmega = CalcArea(x, y, width, height);
                     auto dirD = dir.cast<double>();
+                    sumWeight += dOmega;
 
                     for (int s = 0; s < SHNum; s++)
                     {
@@ -157,6 +157,11 @@ namespace ProjEnv
                     }
                 }
             }
+        }
+
+        for (int s = 0; s < SHNum; s++)
+        {
+            SHCoeffiecents[s] = SHCoeffiecents[s] / sumWeight;
         }
         return SHCoeffiecents;
     }
@@ -202,7 +207,6 @@ public:
 
     virtual void preprocess(const Scene *scene) override
     {
-
         // Here only compute one mesh
         const auto mesh = scene->getMeshes()[0];
         // Projection environment
@@ -290,12 +294,10 @@ public:
                 double* vertexCoeffs = SumIndirectCoeffs(&m_TransportSHCoeffs, scene, v, n, 1);
                 for (int j = 0; j < SHCoeffLength; j++)
                 {
-                    // indirectCoeffs.col(i).coeffRef(j) = vertexCoeffs[j];
-                    cout << vertexCoeffs[j] << ", " << indirectCoeffs.col(i).coeffRef(j) << "; ";
+                    indirectCoeffs.col(i).coeffRef(j) = vertexCoeffs[j];
                 }
-                cout << endl;
             }
-            //m_TransportSHCoeffs += indirectCoeffs;
+            m_TransportSHCoeffs += indirectCoeffs;
         }
 
         // Save in face format
@@ -339,7 +341,7 @@ public:
             for (int p = 0; p < sample_side; p++) {
                 double alpha = (t + rng(gen)) / sample_side;
                 double beta = (p + rng(gen)) / sample_side;
-                // See http://www.bogotobogo.com/Algorithms/uniform_distribution_sphere.php
+
                 double phi = 2.0 * M_PI * beta;
                 double theta = acos(2.0 * alpha - 1.0);
 

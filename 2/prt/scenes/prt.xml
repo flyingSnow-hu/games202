@@ -6,10 +6,11 @@
 
     <!-- Render the visible surface normals -->
     <integrator type="prt">
-		<string name="type" value="shadowed" />
-		<integer name="bounce" value="1" />
+    <!-- unshadowed,shadowed,interreflection -->
+		<string name="type" value="interreflection" />
+		<integer name="bounce" value="2" />
 		<integer name="PRTSampleCount" value="100" />
-		<string name="cubemap" value="cubemap/Skybox" />
+		<string name="cubemap" value="cubemap/GraceCathedral" />
 	</integrator>
 
     <!-- Load the Stanford bunny (https://graphics.stanford.edu/data/3Dscanrep/) -->
