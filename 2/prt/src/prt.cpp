@@ -261,7 +261,7 @@ public:
                 {
                     // TODO: here you need to calculate shadowed transport term of a given direction
                     // TODO: 此处你需要计算给定方向下的shadowed传输项球谐函数值
-                    auto triangleCount = mesh->getTriangleCount();
+                    //auto triangleCount = mesh->getTriangleCount();
                     if (in > 0)
                     {
                         if(scene->rayIntersect(Ray3f(v, wi)))
@@ -281,7 +281,21 @@ public:
         }
         if (m_Type == Type::Interreflection)
         {
-            // TODO: leave for bonus
+            MatrixXf indirectCoeffs;
+            indirectCoeffs.resize(SHCoeffLength, mesh->getVertexCount());
+            for (int i = 0; i < mesh->getVertexCount(); i++)
+            {
+                const Point3f& v = mesh->getVertexPositions().col(i);
+                const Normal3f& n = mesh->getVertexNormals().col(i).normalized();
+                double* vertexCoeffs = SumIndirectCoeffs(&m_TransportSHCoeffs, scene, v, n, 1);
+                for (int j = 0; j < SHCoeffLength; j++)
+                {
+                    // indirectCoeffs.col(i).coeffRef(j) = vertexCoeffs[j];
+                    cout << vertexCoeffs[j] << ", " << indirectCoeffs.col(i).coeffRef(j) << "; ";
+                }
+                cout << endl;
+            }
+            //m_TransportSHCoeffs += indirectCoeffs;
         }
 
         // Save in face format
@@ -307,6 +321,70 @@ public:
         }
         std::cout << "Computed SH coeffs"
                   << " to: " << transPath.str() << std::endl;
+    }
+
+    // 一个点的间接光
+    double* SumIndirectCoeffs(const MatrixXf* directCoeffs, const Scene* scene, const Point3f& v, const Normal3f& n, int depth = 0)
+    {
+        double ret[SHCoeffLength] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        if (depth > m_Bounce) return ret;
+
+        // 蒙特卡洛
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_real_distribution<> rng(0.0, 1.0);
+
+        const int sample_side = static_cast<int>(floor(sqrt(m_SampleCount)));
+        for (int t = 0; t < sample_side; t++) {
+            for (int p = 0; p < sample_side; p++) {
+                double alpha = (t + rng(gen)) / sample_side;
+                double beta = (p + rng(gen)) / sample_side;
+                // See http://www.bogotobogo.com/Algorithms/uniform_distribution_sphere.php
+                double phi = 2.0 * M_PI * beta;
+                double theta = acos(2.0 * alpha - 1.0);
+
+                Eigen::Array3d d = sh::ToVector(phi, theta);
+                const auto wi = Vector3f(d.x(), d.y(), d.z()).normalized();
+                double in = n.dot(wi);
+                if (in > 0)
+                {
+                    Intersection intersection;
+                    bool intersects = scene->rayIntersect(Ray3f(v, wi), intersection);
+                    if (intersects)
+                    {
+                        // 重心插值
+                        // 按照 bary 权重对三个顶点的系数依次插值
+                        // 再乘以 in
+                        const Mesh* mesh = intersection.mesh;
+                        Vector3f bary = intersection.bary;
+                        Point3f triangleIndexs = intersection.tri_index;
+                        Point3f intersectPoint = intersection.p;
+
+                        MatrixXf normals = mesh->getVertexNormals();
+                        Normal3f interpNormal =
+                            Normal3f(normals.col(triangleIndexs.x()).normalized() * bary.x() +
+                                normals.col(triangleIndexs.y()).normalized() * bary.y() +
+                                normals.col(triangleIndexs.z()).normalized() * bary.z())
+                            .normalized();
+                        auto nextBounce = SumIndirectCoeffs(directCoeffs, scene, intersectPoint, interpNormal, depth + 1);
+                        for (int coeffIndex = 0; coeffIndex < SHCoeffLength; coeffIndex++)
+                        {
+                            auto indirect =
+                                (directCoeffs->col(triangleIndexs.x()).coeffRef(coeffIndex) * bary.x() +
+                                    directCoeffs->col(triangleIndexs.y()).coeffRef(coeffIndex) * bary.y() +
+                                    directCoeffs->col(triangleIndexs.z()).coeffRef(coeffIndex) * bary.z() +
+                                    nextBounce[coeffIndex]
+                                    ) * in;
+                            ret[coeffIndex] += indirect;
+                        }
+
+                    }
+                    return ret;
+                }
+                return ret;
+            }
+        }
+        return ret;
     }
 
     Color3f Li(const Scene *scene, Sampler *sampler, const Ray3f &ray) const
