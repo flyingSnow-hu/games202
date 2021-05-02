@@ -28,7 +28,7 @@ class WebGLRenderer {
         console.assert(this.lights.length != 0, "No light");
         console.assert(this.lights.length == 1, "Multiple lights");
 
-        const timer = Date.now() * 0.0001;
+        const timer = Date.now() * 0.001;
 
         for (let l = 0; l < this.lights.length; l++) {
             // Draw light
@@ -52,7 +52,8 @@ class WebGLRenderer {
                 for (let k in this.meshes[i].material.uniforms) {
 
                     let cameraModelMatrix = mat4.create();
-                    //mat4.fromRotation(cameraModelMatrix, timer, [0, 1, 0]);
+                    mat4.fromRotation(cameraModelMatrix, timer, [0, 1, 0]);
+                    // mat4.fromRotation(cameraModelMatrix, 3.14/2, [0, 1, 0]);
 
                     if (k == 'uMoveWithCamera') { // The rotation of the skybox
                         gl.uniformMatrix4fv(
@@ -62,15 +63,15 @@ class WebGLRenderer {
                     }
 
                     // Bonus - Fast Spherical Harmonic Rotation
-                    //let precomputeL_RGBMat3 = getRotationPrecomputeL(precomputeL[guiParams.envmapId], cameraModelMatrix);               
+                    let rotatedColors = getRotationPrecomputeL(colorMat3, cameraModelMatrix);               
                     if (k == 'uPrecomputeLR') {
-                        gl.uniformMatrix3fv(this.meshes[i].shader.program.uniforms.uPrecomputeLR, false, colorMat3[0]);     
+                        gl.uniformMatrix3fv(this.meshes[i].shader.program.uniforms.uPrecomputeLR, false, rotatedColors[0]);     
                     }
                     if (k == 'uPrecomputeLG') {
-                        gl.uniformMatrix3fv(this.meshes[i].shader.program.uniforms.uPrecomputeLG, false, colorMat3[1]);     
+                        gl.uniformMatrix3fv(this.meshes[i].shader.program.uniforms.uPrecomputeLG, false, rotatedColors[1]);     
                     }                    
                     if (k == 'uPrecomputeLB') {
-                        gl.uniformMatrix3fv(this.meshes[i].shader.program.uniforms.uPrecomputeLB, false, colorMat3[2]);    
+                        gl.uniformMatrix3fv(this.meshes[i].shader.program.uniforms.uPrecomputeLB, false, rotatedColors[2]);    
                     }
                 }
                 this.meshes[i].draw(this.camera);
@@ -78,4 +79,10 @@ class WebGLRenderer {
         }
 
     }
+
+
+    getRotationPrecomputeL(shMat, rotationMat)
+    {
+
+    }          
 }
