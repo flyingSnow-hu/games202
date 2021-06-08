@@ -19,6 +19,12 @@ class WebGLRenderer {
     addShadowMeshRender(mesh) { this.shadowMeshes.push(mesh); }
     addBufferMeshRender(mesh) { this.bufferMeshes.push(mesh); }
 
+    normalize(vec3, length) { 
+        let len = Math.sqrt(vec3.x * vec3.x + vec3.y * vec3.y + vec3.z * vec3.z);
+        if (len == 0) return vec3;
+        return [vec3.x * length / len, vec3.y * length / len, vec3.z * length / len];
+    }
+
     render() {
         console.assert(this.lights.length != 0, "No light");
         console.assert(this.lights.length == 1, "Multiple lights");
@@ -40,7 +46,7 @@ class WebGLRenderer {
         };
 
         // Draw light
-        light.meshRender.mesh.transform.translate = light.entity.lightPos;
+        light.meshRender.mesh.transform.translate = this.normalize(light.entity.lightDir, -3);
         light.meshRender.draw(this.camera, null, updatedParamters);
 
         // Shadow pass
