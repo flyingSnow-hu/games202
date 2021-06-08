@@ -85,16 +85,16 @@ function GAMES202Main() {
 	renderer.addLight(directionLight);
 
 	// Add shapes
-	loadGLTF(renderer, 'assets/cube/', 'cube1', 'SSRMaterial');
-	// loadGLTF(renderer, 'assets/cube/', 'cube2', 'SSRMaterial');
+	// loadGLTF(renderer, 'assets/cube/', 'cube1', 'SSRMaterial');
+	loadGLTF(renderer, 'assets/cube/', 'cube2', 'SSRMaterial');
 	// loadGLTF(renderer, 'assets/cave/', 'cave', 'SSRMaterial');
 
 	function createGUI() {
 		const gui = new dat.gui.GUI();
 		const lightPanel = gui.addFolder('Directional Light');
-		lightPanel.add(renderer.lights[0].entity.lightDir, 'x', -10, 10, 0.1);
-		lightPanel.add(renderer.lights[0].entity.lightDir, 'y', -10, 10, 0.1);
-		lightPanel.add(renderer.lights[0].entity.lightDir, 'z', -10, 10, 0.1);
+		lightPanel.add(renderer.lights[0].entity.lightDir, 'x', -10, 10, 0.01);
+		lightPanel.add(renderer.lights[0].entity.lightDir, 'y', -10, 0, 0.01);
+		lightPanel.add(renderer.lights[0].entity.lightDir, 'z', -10, 10, 0.01);
 		lightPanel.open();
 	}
 	createGUI();

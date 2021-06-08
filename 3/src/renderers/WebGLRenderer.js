@@ -19,10 +19,8 @@ class WebGLRenderer {
     addShadowMeshRender(mesh) { this.shadowMeshes.push(mesh); }
     addBufferMeshRender(mesh) { this.bufferMeshes.push(mesh); }
 
-    normalize(vec3, length) { 
-        let len = Math.sqrt(vec3.x * vec3.x + vec3.y * vec3.y + vec3.z * vec3.z);
-        if (len == 0) return vec3;
-        return [vec3.x * length / len, vec3.y * length / len, vec3.z * length / len];
+    calcLightPos(dir) { 
+        return [-dir.x, -dir.y, -dir.z];
     }
 
     render() {
@@ -46,7 +44,8 @@ class WebGLRenderer {
         };
 
         // Draw light
-        light.meshRender.mesh.transform.translate = this.normalize(light.entity.lightDir, -3);
+        light.meshRender.mesh.transform.translate = this.calcLightPos(light.entity.lightDir);
+        // light.meshRender.mesh.transform.rotate = this.normalize(light.entity.lightDir, -3);
         light.meshRender.draw(this.camera, null, updatedParamters);
 
         // Shadow pass
