@@ -45,7 +45,6 @@ class WebGLRenderer {
 
         // Draw light
         light.meshRender.mesh.transform.translate = this.calcLightPos(light.entity.lightDir);
-        // light.meshRender.mesh.transform.rotate = this.normalize(light.entity.lightDir, -3);
         light.meshRender.draw(this.camera, null, updatedParamters);
 
         // Shadow pass
