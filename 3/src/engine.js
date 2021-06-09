@@ -23,16 +23,15 @@ function GAMES202Main() {
 
 	// Add camera
 	const camera = new THREE.PerspectiveCamera(75, gl.canvas.clientWidth / gl.canvas.clientHeight, 1e-3, 1000);
-	let cameraPosition, cameraTarget;
+	let cameraPosition, cameraTarget;	
+	
+	// Cave
+	cameraPosition = [4.18927, 1.0313, 2.07331]
+	cameraTarget = [2.92191, 0.98, 1.55037]
 	
 	// Cube
 	cameraPosition = [6, 1, 0]
 	cameraTarget = [0, 0, 0]
-	
-	
-	// Cave
-	// cameraPosition = [4.18927, 1.0313, 2.07331]
-	// cameraTarget = [2.92191, 0.98, 1.55037]
 	
 	camera.position.set(cameraPosition[0], cameraPosition[1], cameraPosition[2]);
 	camera.fbo = new FBO(gl);
@@ -62,13 +61,13 @@ function GAMES202Main() {
 	let lightPos, lightDir, lightRadiance;
 	
 	// Cave
-	// lightRadiance = [5, 5, 5];
-	// lightPos = [-0.45, 5.40507, 0.637043];
-	// lightDir = {
-	// 	'x': 0.39048811,
-	// 	'y': -0.89896828,
-	// 	'z': 0.19843153,
-	// };
+	lightRadiance = [10, 10, 10];
+	lightPos = [-0.45, 5.40507, 0.637043];
+	lightDir = {
+		'x': 0.39048811,
+		'y': -0.89896828,
+		'z': 0.19843153,
+	};
 	
 	
 	// Cube
@@ -85,8 +84,8 @@ function GAMES202Main() {
 	renderer.addLight(directionLight);
 
 	// Add shapes
-	loadGLTF(renderer, 'assets/cube/', 'cube1', 'SSRMaterial');
-	// loadGLTF(renderer, 'assets/cube/', 'cube2', 'SSRMaterial');
+	// loadGLTF(renderer, 'assets/cube/', 'cube1', 'SSRMaterial');
+	loadGLTF(renderer, 'assets/cube/', 'cube2', 'SSRMaterial');
 	// loadGLTF(renderer, 'assets/cave/', 'cave', 'SSRMaterial');
 
 	function createGUI() {
