@@ -38,7 +38,7 @@ float InitRand(vec2 uv) {
 
 vec3 SampleHemisphereUniform(inout float s, out float pdf) {
   vec2 uv = Rand2(s);
-  float z = uv.x;
+  float z = min(1.0, uv.x + 0.01);
   float phi = uv.y * TWO_PI;
   float sinTheta = sqrt(1.0 - z*z);
   vec3 dir = vec3(sinTheta * cos(phi), sinTheta * sin(phi), z);
@@ -126,7 +126,7 @@ vec3 EvalDiffuse(vec3 wi, vec3 wo, vec2 uv) {
   vec3 lightDir = normalize(wi);
   vec3 normal = normalize(GetGBufferNormalWorld(uv));
   float diff = max(dot(lightDir, normal), 0.0);
-  return diff * albedo * uLightRadiance;
+  return diff * albedo;
 }
 
 /*
@@ -138,18 +138,75 @@ vec3 EvalDirectionalLight(vec2 uv) {
   return uLightRadiance * GetGBufferuShadow(uv);
 }
 
+
+#define MAX_DIST 5.0  // 最大搜索距离
+#define STEP 0.05  // 最大搜索次数
+#define MIN_DIFF 0.05  // 合格距离
+
 bool RayMarch(vec3 ori, vec3 dir, out vec3 hitPos) {
+  float dist = MAX_DIST;
+  vec3 nDir = normalize(dir);
+  for(float d = 0.1;d < MAX_DIST;d+=STEP)
+  {
+    hitPos = ori + nDir * d;
+    float targetDepth = GetDepth(hitPos);
+    vec2 screenUV = GetScreenCoordinate(hitPos);
+    float screenDepth = GetGBufferDepth(screenUV);
+    if(screenDepth < targetDepth)
+    {
+      return true;
+    }
+  }
+
   return false;
+}
+
+void GetOutRadiance(vec3 worldPos, out vec3 diffuse, out vec3 light)
+{
+  vec2 screenUV = GetScreenCoordinate(worldPos);
+  diffuse = EvalDiffuse(uLightDir, uCameraPos-worldPos, screenUV);
+  light = EvalDirectionalLight(screenUV);
 }
 
 #define SAMPLE_NUM 1
 
 void main() {
   float s = InitRand(gl_FragCoord.xy);
-  vec2 screenUV = GetScreenCoordinate(vPosWorld.xyz);
-  vec3 linearColor = vec3(0.0);
-  linearColor = EvalDiffuse(uLightDir, uCameraPos-vPosWorld.xyz, screenUV);
-  linearColor = linearColor * EvalDirectionalLight(screenUV);
+  vec3 worldPos = vPosWorld.xyz;
+  vec3 normal = normalize(GetGBufferNormalWorld(GetScreenCoordinate(worldPos)));
+  vec3 viewDir = normalize(uCameraPos-worldPos);
+  vec3 directDiffuse, directLight;
+  vec2 screenUV = GetScreenCoordinate(worldPos);
+  directDiffuse = EvalDiffuse(uLightDir, uCameraPos-worldPos, screenUV);
+  directLight = EvalDirectionalLight(screenUV);
+
+  vec3 indirectL = vec3(0);
+  vec3 tangent, bitangent;
+  LocalBasis(normal, tangent, bitangent);
+  tangent = normalize(tangent);
+  bitangent = normalize(bitangent);
+
+  mat3 tbn = mat3(tangent, bitangent, normal);
+  vec3 ori = worldPos + normal * 0.05;
+  for(int i = 0;i < SAMPLE_NUM;i++)
+  {
+    float pdf;
+    // vec3 localDir = SampleHemisphereCos(s, pdf);
+    vec3 localDir = SampleHemisphereUniform(s, pdf);
+    vec3 sampleDir = tbn * localDir;
+    vec3 hitPos;
+    bool isHit = RayMarch(ori, sampleDir, hitPos);
+    if (isHit)
+    {      
+      vec3 indirectDiffuse, indirectLight;
+      GetOutRadiance(hitPos, indirectDiffuse, indirectLight);
+      indirectL += indirectDiffuse * indirectLight * directDiffuse / pdf;
+    }
+  }
+  indirectL = indirectL / float(SAMPLE_NUM);
+
+  vec3 linearColor = indirectL;
+  // vec3 linearColor = directDiffuse * directLight + indirectL;
   vec3 color = pow(clamp(linearColor, vec3(0.0), vec3(1.0)), vec3(1.0 / 2.2));
-  gl_FragColor = vec4(vec3(color.rgb), 1.0);
+  gl_FragColor = vec4(color.rgb, 1.0);
 }

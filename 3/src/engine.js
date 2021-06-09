@@ -62,7 +62,7 @@ function GAMES202Main() {
 	let lightPos, lightDir, lightRadiance;
 	
 	// Cave
-	// lightRadiance = [20, 20, 20];
+	// lightRadiance = [5, 5, 5];
 	// lightPos = [-0.45, 5.40507, 0.637043];
 	// lightDir = {
 	// 	'x': 0.39048811,
@@ -85,8 +85,8 @@ function GAMES202Main() {
 	renderer.addLight(directionLight);
 
 	// Add shapes
-	// loadGLTF(renderer, 'assets/cube/', 'cube1', 'SSRMaterial');
-	loadGLTF(renderer, 'assets/cube/', 'cube2', 'SSRMaterial');
+	loadGLTF(renderer, 'assets/cube/', 'cube1', 'SSRMaterial');
+	// loadGLTF(renderer, 'assets/cube/', 'cube2', 'SSRMaterial');
 	// loadGLTF(renderer, 'assets/cave/', 'cave', 'SSRMaterial');
 
 	function createGUI() {
