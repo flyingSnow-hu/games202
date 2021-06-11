@@ -139,9 +139,10 @@ vec3 EvalDirectionalLight(vec2 uv) {
 }
 
 
-#define MAX_DIST 10.0  // 最大搜索距离
+#define MAX_DIST 5.0  // 最大搜索距离
 #define STEP 0.1  // 步长
-#define MIN_DIFF 0.05  // 合格距离
+#define MIN_DIFF 0.2  // 合格距离
+#define SAMPLE_NUM 70
 
 bool RayMarch(vec3 ori, vec3 dir, out vec3 hitPos) {
   float dist = MAX_DIST;
@@ -154,7 +155,16 @@ bool RayMarch(vec3 ori, vec3 dir, out vec3 hitPos) {
     if(screenUV.x >= 0.0 && screenUV.x <= 1.0 && screenUV.y >= 0.0 && screenUV.y <= 1.0)
     {
       float screenDepth = GetGBufferDepth(screenUV);
-      if(screenDepth < targetDepth) return true;
+      if(screenDepth < targetDepth) 
+      {
+        if (targetDepth - screenDepth < MIN_DIFF)
+        {
+          return true;
+        }else
+        {
+          return false;
+        }
+      }
     }
   }
 
@@ -167,8 +177,6 @@ void GetDirectRadiance(vec3 worldPos, out vec3 diffuse, out vec3 light)
   diffuse = EvalDiffuse(uLightDir, uCameraPos-worldPos, screenUV);
   light = EvalDirectionalLight(screenUV);
 }
-
-#define SAMPLE_NUM 10
 
 void main() {
   float s = InitRand(gl_FragCoord.xy);
@@ -189,8 +197,8 @@ void main() {
   for(int i = 0;i < SAMPLE_NUM;i++)
   {
     float pdf = INV_TWO_PI;
-    // vec3 localDir = SampleHemisphereCos(s, pdf);
-    vec3 localDir = SampleHemisphereUniform(s, pdf);
+    vec3 localDir = SampleHemisphereCos(s, pdf);
+    // vec3 localDir = SampleHemisphereUniform(s, pdf);
     vec3 sampleDir = tbn * localDir;
     vec3 hitPos;
     bool isHit = RayMarch(ori, sampleDir, hitPos);
@@ -199,8 +207,7 @@ void main() {
       vec3 indirectDiffuse, indirectLight;
       GetDirectRadiance(hitPos, indirectDiffuse, indirectLight);
       vec3 bounceDiffuse = EvalDiffuse(normalize(hitPos - ori), vec3(0), screenUV);
-      indirect += indirectDiffuse * indirectLight * bounceDiffuse;// / pdf;
-      // indirect += indirectDiffuse;
+      indirect += indirectDiffuse * indirectLight * bounceDiffuse / pdf;
     }
   }
   indirect = indirect / float(SAMPLE_NUM);
