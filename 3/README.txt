@@ -1,0 +1,1 @@
+完成了作业的基础部分： EvalDiffuse 和 EvalDirectionalLight 两个方法、 RayMarch 方法和间接光照部分
