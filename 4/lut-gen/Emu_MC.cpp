@@ -79,7 +79,6 @@ Vec3f IntegrateBRDF(Vec3f viewDir, float roughness, float NdotV) {
     float C = 0.0;
     const int sample_count = 1024;
     Vec3f N = Vec3f(0.0, 0.0, 1.0);
-    float reci_dMiudPhi = resolution * resolution;
     
     samplePoints sampleList = squareToCosineHemisphere(sample_count);
     for (int i = 0; i < sample_count; i++) {
@@ -91,9 +90,9 @@ Vec3f IntegrateBRDF(Vec3f viewDir, float roughness, float NdotV) {
         auto dist = DistributionGGX(N, halfDir, roughness);
         auto geo = GeometrySmith(roughness, NdotV, NdotL);
         auto ret = dist * geo * NdotL / (4 * NdotL * NdotV * pdf);
-        A += ret;
-        B += ret;
-        C += ret;
+        A += dist;
+        B += dist;
+        C += dist;
     }
     return {A / sample_count, B / sample_count, C / sample_count};
 }
