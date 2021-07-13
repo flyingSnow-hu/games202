@@ -37,6 +37,7 @@ function loadGLTF(renderer, path, name, objMaterial, transform, metallic=1.0, ro
 					}
 					else {
 						let kd = [0.7216, 0.451, 0.2]; // copper
+						// let kd = [0.5, 0.2, 0.2]; 
 						colorMap.CreateConstantTexture(renderer.gl, kd, true);
 					}
 					

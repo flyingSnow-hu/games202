@@ -67,8 +67,10 @@ vec3 MultiScatterBRDF(float NdotL, float NdotV)
   vec3 E_i = texture2D(uBRDFLut, vec2(NdotV, uRoughness)).xyz;
 
   vec3 E_avg = texture2D(uEavgLut, vec2(0, uRoughness)).xyz;
+  // vec3 E_avg = vec3(0.8);
   // copper
   vec3 edgetint = vec3(0.827, 0.792, 0.678);
+  // vec3 edgetint = vec3(0.1);
   vec3 F_avg = AverageFresnel(albedo, edgetint);
   
   // TODO: To calculate fms and missing energy here

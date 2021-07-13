@@ -52,10 +52,10 @@ Vec3f IntegrateEmu(Vec3f V, float roughness, float NdotV, Vec3f Ei) {
         float NoV = std::max(dot(N, V), 0.0f);
 
         // TODO: To calculate Eavg here - Bonus 1
-        Eavg += Ei * roughness;
+        Eavg += Ei;
     }
 
-    return Eavg * 2.0f / sample_count;
+    return Eavg * 2.0f  * NdotV/ sample_count;
 }
 
 void setRGB(int x, int y, float alpha, unsigned char *data) {
@@ -114,7 +114,7 @@ int main() {
 
             Eavg = Vec3f(0.0);
 		}
-		//stbi_flip_vertically_on_write(true);
+		stbi_flip_vertically_on_write(true);
 		stbi_write_png("GGX_Eavg_LUT.png", resolution, resolution, channel, data, 0);
 	}
 	stbi_image_free(Edata);
