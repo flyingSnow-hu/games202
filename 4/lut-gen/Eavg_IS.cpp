@@ -26,12 +26,12 @@ Vec2f Hammersley(uint32_t i, uint32_t N) {
 }
 
 Vec3f ImportanceSampleGGX(Vec2f Xi, Vec3f N, float roughness) {
-
     float a = roughness * roughness;
+    float theta = atan2f(a * sqrt(Xi.x), sqrt(1 - Xi.x));
+    float phi = 2 * PI * Xi.y;
+    float x = sin(theta) * cos(phi), y = sin(theta) * sin(phi), z = cos(theta);
 
-    // TODO: Copy the code from your previous work - Bonus 1
-
-    return Vec3f(1.0f);
+    return Vec3f(x, y, z);
 }
 
 
@@ -52,10 +52,10 @@ Vec3f IntegrateEmu(Vec3f V, float roughness, float NdotV, Vec3f Ei) {
         float NoV = std::max(dot(N, V), 0.0f);
 
         // TODO: To calculate Eavg here - Bonus 1
-        
+        Eavg += Ei * roughness;
     }
 
-    return Vec3f(1.0);
+    return Eavg * 2.0f / sample_count;
 }
 
 void setRGB(int x, int y, float alpha, unsigned char *data) {
@@ -90,11 +90,8 @@ int main() {
         // | 
         // | rough（i）
         // Flip it, if you want the data written to the texture
-        //uint8_t data[resolution * resolution * 3];
-        
         std::vector<uint8_t> buffer(resolution * resolution * 3);
         uint8_t* data = buffer.data();
-
         float step = 1.0 / resolution;
         Vec3f Eavg = Vec3f(0.0);
 		for (int i = 0; i < resolution; i++) 
@@ -117,7 +114,7 @@ int main() {
 
             Eavg = Vec3f(0.0);
 		}
-		stbi_flip_vertically_on_write(true);
+		//stbi_flip_vertically_on_write(true);
 		stbi_write_png("GGX_Eavg_LUT.png", resolution, resolution, channel, data, 0);
 	}
 	stbi_image_free(Edata);

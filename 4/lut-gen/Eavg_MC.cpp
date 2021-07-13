@@ -34,7 +34,7 @@ void setRGB(int x, int y, Vec3f alpha, unsigned char *data) {
 }
 
 samplePoints squareToCosineHemisphere(int sample_count){
-    samplePoints samlpeList;
+    samplePoints sampleList;
     const int sample_side = static_cast<int>(floor(sqrt(sample_count)));
 
     std::random_device rd;
@@ -50,11 +50,11 @@ samplePoints squareToCosineHemisphere(int sample_count){
             Vec3f wi = Vec3f(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta));
             float pdf = wi.z / PI;
             
-            samlpeList.directions.push_back(wi);
-            samlpeList.PDFs.push_back(pdf);
+            sampleList.directions.push_back(wi);
+            sampleList.PDFs.push_back(pdf);
         }
     }
-    return samlpeList;
+    return sampleList;
 }
 
 Vec3f getEmu(int x, int y, int alpha, unsigned char *data, float NdotV, float roughness) {
@@ -79,10 +79,11 @@ Vec3f IntegrateEmu(Vec3f V, float roughness, float NdotV, Vec3f Ei) {
         float NoV = std::max(dot(N, V), 0.0f);
 
         // TODO: To calculate Eavg here
-        Eavg += Ei * roughness * 2;
+        Eavg += Ei * roughness;
+        
     }
 
-    return Eavg / sample_count;
+    return Eavg * 2.0f / sample_count;
 }
 
 
@@ -100,7 +101,6 @@ int main() {
         // | 
         // | rough（i）
         // flip it if you want to write the data on picture 
-        //uint8_t data[resolution * resolution * 3];
         std::vector<uint8_t> buffer(resolution * resolution * 3);
         uint8_t* data = buffer.data();
         float step = 1.0 / resolution;
@@ -126,7 +126,7 @@ int main() {
             Eavg = Vec3f(0.0);
 		}
 
-		stbi_flip_vertically_on_write(true);
+		//stbi_flip_vertically_on_write(true);
 		stbi_write_png("GGX_Eavg_LUT.png", resolution, resolution, channel, data, 0);
 	}
 	stbi_image_free(Edata);

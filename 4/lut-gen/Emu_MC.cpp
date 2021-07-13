@@ -19,7 +19,7 @@ typedef struct samplePoints {
 }samplePoints;
 
 samplePoints squareToCosineHemisphere(int sample_count){
-    samplePoints sampleList;
+    samplePoints samlpeList;
     const int sample_side = static_cast<int>(floor(sqrt(sample_count)));
 
     std::random_device rd;
@@ -35,11 +35,11 @@ samplePoints squareToCosineHemisphere(int sample_count){
             Vec3f wi = Vec3f(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta));
             float pdf = wi.z / PI;
             
-            sampleList.directions.push_back(wi);
-            sampleList.PDFs.push_back(pdf);
+            samlpeList.directions.push_back(wi);
+            samlpeList.PDFs.push_back(pdf);
         }
     }
-    return sampleList;
+    return samlpeList;
 }
 
 float DistributionGGX(Vec3f N, Vec3f H, float roughness)
@@ -73,7 +73,7 @@ float GeometrySmith(float roughness, float NoV, float NoL) {
     return ggx1 * ggx2;
 }
 
-Vec3f IntegrateBRDF(Vec3f viewDir, float roughness, float NdotV) {
+Vec3f IntegrateBRDF(Vec3f V, float roughness, float NdotV) {
     float A = 0.0;
     float B = 0.0;
     float C = 0.0;
@@ -82,18 +82,19 @@ Vec3f IntegrateBRDF(Vec3f viewDir, float roughness, float NdotV) {
     
     samplePoints sampleList = squareToCosineHemisphere(sample_count);
     for (int i = 0; i < sample_count; i++) {
-        // TODO: To calculate (fr * ni) / p_o here
-        auto lightDir = sampleList.directions[i];  // normalized
-        auto pdf = sampleList.PDFs[i];
-        auto halfDir = normalize(lightDir + viewDir);
-        auto NdotL = dot(N, lightDir);
-        auto dist = DistributionGGX(N, halfDir, roughness);
-        auto geo = GeometrySmith(roughness, NdotV, NdotL);
-        auto ret = dist * geo * NdotL / (4 * NdotL * NdotV * pdf);
-        A += dist;
-        B += dist;
-        C += dist;
+      // TODO: To calculate (fr * ni) / p_o here
+        Vec3f lightDir = sampleList.directions[i];
+        float pdf = sampleList.PDFs[i];
+        float NdotL = dot(lightDir, N);
+        Vec3f halfDir = normalize(lightDir + V);
+        float brdf = GeometrySmith(roughness, NdotV, NdotL) * DistributionGGX(N, halfDir, roughness);
+        brdf = brdf / (4 * NdotV);
+        float ret = brdf / pdf;
+        A += ret;
+        B += ret;
+        C += ret;
     }
+
     return {A / sample_count, B / sample_count, C / sample_count};
 }
 

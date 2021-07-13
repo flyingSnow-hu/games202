@@ -25,36 +25,20 @@ Vec2f Hammersley(uint32_t i, uint32_t N) { // 0-1
 
 Vec3f ImportanceSampleGGX(Vec2f Xi, Vec3f N, float roughness) {
     float a = roughness * roughness;
+
     //TODO: in spherical space - Bonus 1
-    //float phi = Xi.x * 2 * PI, theta = std::min(std::max(Xi.y, 0.01f), 0.99f) * PI * 0.5f;
-    float phi = Xi.y * 2 * PI;
-    float theta = atan2f(a * sqrtf(Xi.x), sqrtf(1 - Xi.x));
+    float theta = atan2f(a * sqrt(Xi.x), sqrt(1-Xi.x));
+    float phi = 2 * PI * Xi.y;
 
     //TODO: from spherical space to cartesian space - Bonus 1
-    Vec3f halfDir = Vec3f(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta));
- 
+    float x = sin(theta) * cos(phi), y = sin(theta) * sin(phi), z = cos(theta); 
 
     //TODO: tangent coordinates - Bonus 1
-    halfDir = normalize(halfDir);
 
 
     //TODO: transform H to tangent space - Bonus 1
-
-    return halfDir;
-}
-
-float DistributionGGX(Vec3f N, Vec3f H, float roughness)
-{
-    float a = roughness * roughness;
-    float a2 = a * a;
-    float NdotH = std::max(dot(N, H), 0.0f);
-    float NdotH2 = NdotH * NdotH;
-
-    float nom = a2;
-    float denom = (NdotH2 * (a2 - 1.0) + 1.0);
-    denom = PI * denom * denom;
-
-    return nom / std::max(denom, 0.0001f);
+    
+    return Vec3f(x,y,z);
 }
 
 float GeometrySchlickGGX(float NdotV, float roughness) {
@@ -75,17 +59,11 @@ float GeometrySmith(float roughness, float NoV, float NoL) {
     return ggx1 * ggx2;
 }
 
-float GetPdf(float roughness, float NoV, float NoL, float VoH, float NoH) {
-    return std::max(GeometrySmith(roughness, NoV, NoL) * VoH / (NoV * NoH), 0.0f);
-}
-
 Vec3f IntegrateBRDF(Vec3f V, float roughness) {
-    float A = 0.0;
-    float B = 0.0;
-    float C = 0.0;
+    float R = 0, G = 0, B = 0;
+
     const int sample_count = 1024;
     Vec3f N = Vec3f(0.0, 0.0, 1.0);
-
     for (int i = 0; i < sample_count; i++) {
         Vec2f Xi = Hammersley(i, sample_count);
         Vec3f H = ImportanceSampleGGX(Xi, N, roughness);
@@ -97,21 +75,19 @@ Vec3f IntegrateBRDF(Vec3f V, float roughness) {
         float NoV = std::max(dot(N, V), 0.0f);
         
         // TODO: To calculate (fr * ni) / p_o here - Bonus 1
-        float weight = GetPdf(roughness, NoV, NoL, VoH, NoH);
-        A += weight;
-        B += weight;
-        C += weight;
+        float weight = VoH * GeometrySmith(roughness, NoV, NoL) / (NoV * NoH);
+        R = R + weight;
 
         // Split Sum - Bonus 2
+        G = G + weight * (1 - pow(VoH, 5));
     }
 
-    return { A / sample_count, B / sample_count, C / sample_count };
+    return Vec3f(R / sample_count, G / sample_count, B / sample_count);
 }
 
 int main() {
     uint8_t data[resolution * resolution * 3];
     float step = 1.0 / resolution;
-
     for (int i = 0; i < resolution; i++) {
         for (int j = 0; j < resolution; j++) {
             float roughness = step * (static_cast<float>(i) + 0.5f);
@@ -125,9 +101,8 @@ int main() {
             data[(i * resolution + j) * 3 + 2] = uint8_t(irr.z * 255.0);
         }
     }
-
     stbi_flip_vertically_on_write(true);
-    stbi_write_png("GGX_E_LUT.png", resolution, resolution, 3, data, resolution * 3);
+    stbi_write_png("GGX_E_LUT_SPLIT.png", resolution, resolution, 3, data, resolution * 3);
     
     std::cout << "Finished precomputed!" << std::endl;
     return 0;
