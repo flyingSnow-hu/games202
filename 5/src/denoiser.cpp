@@ -117,9 +117,9 @@ Buffer2D<Float3> Denoiser::Filter(const FrameInfo &frameInfo) {
                                             frameInfo.m_position(x, y)))
                         );
 
-                    auto sum = -sqrDist / (2 * m_sigmaPlane * m_sigmaPlane)
+                    auto sum = -sqrDist / (2 * m_sigmaCoord * m_sigmaCoord)
                                 -sqrDNormal / (2 * m_sigmaNormal * m_sigmaNormal) 
-                                -sqrDPlane / (2 * m_sigmaCoord * m_sigmaCoord);
+                                -sqrDPlane / (2 * m_sigmaPlane * m_sigmaPlane);
 
                     auto color_i = frameInfo.m_beauty(x, y);
                     auto color_j = frameInfo.m_beauty(jx, jy);
