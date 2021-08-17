@@ -43,7 +43,7 @@ void Denoise(const filesystem::path &inputDir, const filesystem::path &outputDir
     for (int i = 0; i < frameNum; i++) {
         std::cout << "Frame: " << i << std::endl;
         FrameInfo frameInfo = LoadFrameInfo(inputDir, i);
-        Buffer2D<Float3> image = denoiser.ProcessFrame(frameInfo);
+        Buffer2D<Float3> image = denoiser.ProcessFrame(frameInfo, i);
         std::string filename =
             (outputDir / ("result_" + std::to_string(i) + ".exr")).str();
         WriteFloat3Image(image, filename);
