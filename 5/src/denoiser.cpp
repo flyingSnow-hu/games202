@@ -3,7 +3,7 @@
 using namespace std;
 typedef Float3::EType EType;
 
-Denoiser::Denoiser() : m_useTemportal(true) {}
+Denoiser::Denoiser() : m_useTemportal(false) {}
 
 void Denoiser::Reprojection(const FrameInfo &frameInfo) {
     int height = m_accColor.m_height;
@@ -100,37 +100,39 @@ Buffer2D<Float3> Denoiser::Filter(const FrameInfo &frameInfo) {
         for (int x = 0; x < width; x++) {
             double summedR = 0, summedG = 0, summedB = 0;
             double summedWeightR = 0, summedWeightG = 0, summedWeightB = 0;
-            for (int jx = max(x - kernelRadius / 2, 0);
-                 jx <= min(x + kernelRadius / 2, width - 1); jx++) {
-                for (int jy = max(y - kernelRadius / 2, 0);
-                     jy <= min(y + kernelRadius / 2, height - 1); jy++) {
-                    auto sqrDist = Sqr(jx - x) + Sqr(jy - y);
-                    auto sqrDNormal = Sqr(
-                        SafeAcos(
-                            Dot(frameInfo.m_normal(x, y), frameInfo.m_normal(jx, jy))
-                        )
-                    );
-
-                    auto sqrDPlane = Sqr(
-                                Dot(frameInfo.m_normal(x, y), 
-                                Normalize(frameInfo.m_position(jx, jy) -
-                                            frameInfo.m_position(x, y)))
-                        );
-
-                    auto sum = -sqrDist / (2 * m_sigmaCoord * m_sigmaCoord)
-                                -sqrDNormal / (2 * m_sigmaNormal * m_sigmaNormal) 
-                                -sqrDPlane / (2 * m_sigmaPlane * m_sigmaPlane);
-
+            for (int jx = max(x - kernelRadius, 0);
+                 jx <= min(x + kernelRadius, width - 1); jx++) {
+                for (int jy = max(y - kernelRadius, 0);
+                     jy <= min(y + kernelRadius, height - 1); jy++) {
+                    double weightR = 1;
+                    double weightG = 1;
+                    double weightB = 1;
                     auto color_i = frameInfo.m_beauty(x, y);
                     auto color_j = frameInfo.m_beauty(jx, jy);
-                    auto sqrDistR = Sqr(color_i.x - color_j.x);
-                    auto sqrDistG = Sqr(color_i.y - color_j.y);
-                    auto sqrDistB = Sqr(color_i.z - color_j.z);
-                    double sqrSigmaColor2 = 2 * m_sigmaColor * m_sigmaColor;
 
-                    double weightR = exp(sum - sqrDistR / sqrSigmaColor2);
-                    double weightG = exp(sum - sqrDistG / sqrSigmaColor2);
-                    double weightB = exp(sum - sqrDistB / sqrSigmaColor2);
+                    if (x != jx || y != jy) {
+                        auto sqrDist = Sqr(jx - x) + Sqr(jy - y);
+                        auto sqrDNormal = Sqr(SafeAcos(
+                            Dot(frameInfo.m_normal(x, y), frameInfo.m_normal(jx, jy))));
+
+                        auto sqrDPlane = Sqr(Dot(frameInfo.m_normal(x, y),
+                                                 Normalize(frameInfo.m_position(jx, jy) -
+                                                           frameInfo.m_position(x, y))));
+
+                        auto sum = -sqrDist / (2 * m_sigmaCoord * m_sigmaCoord) -
+                                   sqrDNormal / (2 * m_sigmaNormal * m_sigmaNormal) -
+                                   sqrDPlane / (2 * m_sigmaPlane * m_sigmaPlane);
+
+                        auto sqrDistR = Sqr(color_i.x - color_j.x);
+                        auto sqrDistG = Sqr(color_i.y - color_j.y);
+                        auto sqrDistB = Sqr(color_i.z - color_j.z);
+
+                        double sqrSigmaColor2 = 2 * m_sigmaColor * m_sigmaColor;
+
+                        weightR = exp(sum - sqrDistR / sqrSigmaColor2);
+                        weightG = exp(sum - sqrDistG / sqrSigmaColor2);
+                        weightB = exp(sum - sqrDistB / sqrSigmaColor2);
+                    }
 
                     summedWeightR += weightR;
                     summedWeightG += weightG;
