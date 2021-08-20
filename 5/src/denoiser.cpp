@@ -3,7 +3,7 @@
 using namespace std;
 typedef Float3::EType EType;
 
-Denoiser::Denoiser() : m_useTemportal(false) {}
+Denoiser::Denoiser() : m_useTemportal(true) {}
 
 void Denoiser::Reprojection(const FrameInfo &frameInfo) {
     int height = m_accColor.m_height;
@@ -94,6 +94,7 @@ Buffer2D<Float3> Denoiser::Filter(const FrameInfo &frameInfo) {
     int width = frameInfo.m_beauty.m_width;
     Buffer2D<Float3> filteredImage = CreateBuffer2D<Float3>(width, height);
     filteredImage.Copy(frameInfo.m_beauty);
+    //return filteredImage;
 
     Buffer2D<Float3> tempImage = CreateBuffer2D<Float3>(width, height);
 
@@ -189,8 +190,8 @@ Buffer2D<Float3> Denoiser::ProcessFrame(const FrameInfo &frameInfo, const int &i
 
     // Maintain
     Maintain(frameInfo);
-    if (!m_useTemportal) {
-        m_useTemportal = true;
-    }
+    //if (!m_useTemportal) {
+    //    m_useTemportal = true;
+    //}
     return m_accColor;
 }
