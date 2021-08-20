@@ -93,59 +93,73 @@ Buffer2D<Float3> Denoiser::Filter(const FrameInfo &frameInfo) {
     int height = frameInfo.m_beauty.m_height;
     int width = frameInfo.m_beauty.m_width;
     Buffer2D<Float3> filteredImage = CreateBuffer2D<Float3>(width, height);
+    filteredImage.Copy(frameInfo.m_beauty);
+
+    Buffer2D<Float3> tempImage = CreateBuffer2D<Float3>(width, height);
+
     int kernelRadius = 16;
+    int maxWave = floor(log2f(max(width, height))) - 1;
+    for (int wave = 0; wave < maxWave; wave++) {
+        int step = pow(2, wave);
+        int kernelRadius = step * 2;
 
 #pragma omp parallel for
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            double summedR = 0, summedG = 0, summedB = 0;
-            double summedWeightR = 0, summedWeightG = 0, summedWeightB = 0;
-            for (int jx = max(x - kernelRadius, 0);
-                 jx <= min(x + kernelRadius, width - 1); jx++) {
-                for (int jy = max(y - kernelRadius, 0);
-                     jy <= min(y + kernelRadius, height - 1); jy++) {
-                    double weightR = 1;
-                    double weightG = 1;
-                    double weightB = 1;
-                    auto color_i = frameInfo.m_beauty(x, y);
-                    auto color_j = frameInfo.m_beauty(jx, jy);
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                double summedR = 0, summedG = 0, summedB = 0;
+                double summedWeightR = 0, summedWeightG = 0, summedWeightB = 0;
+                for (int jx = x - kernelRadius; jx <= x + kernelRadius; jx+=step) {
+                    for (int jy = y - kernelRadius; jy <= y + kernelRadius; jy+=step) {
+                        if (jx < 0 || jy < 0 || jx >= width || jy >= height)
+                            continue;
 
-                    if (x != jx || y != jy) {
-                        auto sqrDist = Sqr(jx - x) + Sqr(jy - y);
-                        auto sqrDNormal = Sqr(SafeAcos(
-                            Dot(frameInfo.m_normal(x, y), frameInfo.m_normal(jx, jy))));
+                        double weightR = 1;
+                        double weightG = 1;
+                        double weightB = 1;
+                        auto color_i = filteredImage(x, y);
+                        auto color_j = filteredImage(jx, jy);
 
-                        auto sqrDPlane = Sqr(Dot(frameInfo.m_normal(x, y),
-                                                 Normalize(frameInfo.m_position(jx, jy) -
-                                                           frameInfo.m_position(x, y))));
+                        if (x != jx || y != jy) {
+                            auto sqrDist = Sqr(jx - x) + Sqr(jy - y);
+                            auto sqrDNormal = Sqr(SafeAcos(Dot(
+                                frameInfo.m_normal(x, y), frameInfo.m_normal(jx, jy))));
 
-                        auto sum = -sqrDist / (2 * m_sigmaCoord * m_sigmaCoord) -
-                                   sqrDNormal / (2 * m_sigmaNormal * m_sigmaNormal) -
-                                   sqrDPlane / (2 * m_sigmaPlane * m_sigmaPlane);
+                            auto sqrDPlane =
+                                Sqr(Dot(frameInfo.m_normal(x, y),
+                                        Normalize(frameInfo.m_position(jx, jy) -
+                                                  frameInfo.m_position(x, y))));
 
-                        auto sqrDistR = Sqr(color_i.x - color_j.x);
-                        auto sqrDistG = Sqr(color_i.y - color_j.y);
-                        auto sqrDistB = Sqr(color_i.z - color_j.z);
+                            auto sum = -sqrDist / (2 * m_sigmaCoord * m_sigmaCoord) -
+                                       sqrDNormal / (2 * m_sigmaNormal * m_sigmaNormal) -
+                                       sqrDPlane / (2 * m_sigmaPlane * m_sigmaPlane);
 
-                        double sqrSigmaColor2 = 2 * m_sigmaColor * m_sigmaColor;
+                            auto sqrDistR = Sqr(color_i.x - color_j.x);
+                            auto sqrDistG = Sqr(color_i.y - color_j.y);
+                            auto sqrDistB = Sqr(color_i.z - color_j.z);
 
-                        weightR = exp(sum - sqrDistR / sqrSigmaColor2);
-                        weightG = exp(sum - sqrDistG / sqrSigmaColor2);
-                        weightB = exp(sum - sqrDistB / sqrSigmaColor2);
+                            double sqrSigmaColor2 = 2 * m_sigmaColor * m_sigmaColor;
+
+                            weightR = exp(sum - sqrDistR / sqrSigmaColor2);
+                            weightG = exp(sum - sqrDistG / sqrSigmaColor2);
+                            weightB = exp(sum - sqrDistB / sqrSigmaColor2);
+                        }
+
+                        summedWeightR += weightR;
+                        summedWeightG += weightG;
+                        summedWeightB += weightB;
+
+                        summedR += color_j.x * weightR;
+                        summedG += color_j.y * weightG;
+                        summedB += color_j.z * weightB;
                     }
-
-                    summedWeightR += weightR;
-                    summedWeightG += weightG;
-                    summedWeightB += weightB;
-
-                    summedR += color_j.x * weightR;
-                    summedG += color_j.y * weightG;
-                    summedB += color_j.z * weightB;
                 }
+
+                tempImage(x, y) =
+                    Float3(summedR / summedWeightR, summedG / summedWeightG,
+                           summedB / summedWeightB);
             }
-            
-            filteredImage(x, y) = Float3(summedR/summedWeightR, summedG/summedWeightG, summedB/summedWeightB);
         }
+        filteredImage.Copy(tempImage);
     }
     return filteredImage;
 }
